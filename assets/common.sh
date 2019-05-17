@@ -84,8 +84,9 @@ setup_tls() {
 
 setup_helm() {
 
-  echo "Setup helm with $1"
+  echo "Setup helm with $1 $payload"
   init_server=$(jq -r '.source.helm_init_server // "false"' < $1)
+
 
 
   kubeconfig_tiller_namespace=$(jq -r '.source.kubeconfig_tiller_namespace // "false"' <$1)
