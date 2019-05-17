@@ -83,7 +83,10 @@ setup_tls() {
 }
 
 setup_helm() {
+
+  echo "Setup helm with $1"
   init_server=$(jq -r '.source.helm_init_server // "false"' < $1)
+
 
   kubeconfig_tiller_namespace=$(jq -r '.source.kubeconfig_tiller_namespace // "false"' <$1)
   if [ "$kubeconfig_tiller_namespace" = "true" ]
@@ -111,6 +114,7 @@ setup_helm() {
   fi
 
   if [ "$init_server" = true ]; then
+    echo "Init the server side"
     if [ "$tillerless" = true ]; then
       echo "Setting both init_server and tillerless is not supported"
       exit 1
@@ -139,12 +143,15 @@ setup_helm() {
       helm_ca_cert_path="/root/.helm/ca.pem"
       echo "$tiller_key" > $tiller_key_path
       echo "$tiller_cert" > $tiller_cert_path
+      echo "Init with tls"
       $helm_bin init --tiller-tls --tiller-tls-cert $tiller_cert_path --tiller-tls-key $tiller_key_path --tiller-tls-verify --tls-ca-cert $tiller_key_path --tiller-namespace=$tiller_namespace --service-account=$tiller_service_account --history-max=$history_max $stable_repo --upgrade $helm_init_wait_arg
     else
+      echo "Init without tls on sa $tiller_service_account"
       $helm_bin init --tiller-namespace=$tiller_namespace --service-account=$tiller_service_account --history-max=$history_max $stable_repo --upgrade $helm_init_wait_arg
     fi
     wait_for_service_up tiller-deploy 10
   else
+    echo "Init on the client side only"
     export HELM_HOST=$(jq -r '.source.helm_host // ""' < $1)
     $helm_bin init -c --tiller-namespace $tiller_namespace $stable_repo > /dev/null
   fi
